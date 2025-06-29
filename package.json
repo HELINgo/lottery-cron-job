@@ -3,18 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "draw": "npx tsx autoDrawWinner.ts"
+    "draw": "tsx autoDrawWinner.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "tsx": "^4.20.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
-    "tsx": "^4.20.3",
     "typescript": "^5.4.5"
   }
 }
-
 
 
