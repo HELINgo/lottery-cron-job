@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
@@ -69,17 +71,15 @@ const drawWinner = async () => {
   }
 
   // ✅ 写入中奖历史
-  const { error: historyError } = await supabase.from('lottery_history').insert([
-    {
-      id: randomUUID(),
-      wallet: winnerEntry.wallet,
-      round_id: round.id,
-      number: winnerEntry.ticket_number,
-      amount: entries.length * 0.01, // 每人 0.01 SOL
-      round_time: round.end_time,
-      twitter: xHandleData?.x || null,
-    },
-  ]);
+  const { error: historyError } = await supabase.from('lottery_history').insert([{
+    id: randomUUID(),
+    wallet: winnerEntry.wallet,
+    round_id: round.id,
+    number: winnerEntry.ticket_number,
+    amount: entries.length * 0.01,
+    round_time: round.end_time,
+    twitter: xHandleData?.x || null,
+  }]);
 
   if (historyError) {
     console.error('❌ 写入中奖记录失败:', historyError.message);
@@ -88,7 +88,7 @@ const drawWinner = async () => {
 
   console.log('✅ 已写入中奖记录');
 
-  // ✅ 更新当前轮次状态为 drawn
+  // ✅ 更新轮次状态
   const { error: updateRoundError } = await supabase
     .from('lottery_rounds')
     .update({ status: 'drawn' })
@@ -101,18 +101,16 @@ const drawWinner = async () => {
 
   console.log('📦 本轮开奖完成 ✅');
 
-  // ✅ 创建下一轮（5 分钟后开奖）
+  // ✅ 开启下一轮
   const newStart = new Date();
-  const newEnd = new Date(newStart.getTime() + 5 * 60 * 1000); // 5 分钟后
+  const newEnd = new Date(newStart.getTime() + 5 * 60 * 1000);
 
-  const { error: createNextError } = await supabase.from('lottery_rounds').insert([
-    {
-      id: randomUUID(),
-      start_time: newStart.toISOString(),
-      end_time: newEnd.toISOString(),
-      status: 'open',
-    },
-  ]);
+  const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
+    id: randomUUID(),
+    start_time: newStart.toISOString(),
+    end_time: newEnd.toISOString(),
+    status: 'open',
+  }]);
 
   if (createNextError) {
     console.error('❌ 创建下一轮失败:', createNextError.message);
@@ -124,3 +122,4 @@ const drawWinner = async () => {
 
 // ✅ 执行
 drawWinner();
+
