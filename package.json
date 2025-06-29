@@ -2,13 +2,14 @@
   "name": "lottery-cron-job",
   "version": "1.0.0",
   "description": "Automated lottery draw script for NFTMEME",
-  "type": "module",
   "scripts": {
-    "draw": "node --loader ts-node/esm autoDrawWinner.ts",
-    "next": "node --loader ts-node/esm createNextRound.ts"
+    "draw": "ts-node autoDrawWinner.ts",
+    "next": "ts-node createNextRound.ts",
+    "start": "ts-node autoDrawWinner.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.5"
+    "@supabase/supabase-js": "^2.39.5",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
