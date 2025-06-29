@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "draw": "node --loader tsx autoDrawWinner.ts"
+    "draw": "tsx autoDrawWinner.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
@@ -15,5 +15,6 @@
     "typescript": "^5.4.5"
   }
 }
+
 
 
