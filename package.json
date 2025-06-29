@@ -3,19 +3,17 @@
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
-    "draw": "ts-node autoDrawWinner.ts"
+    "draw": "tsx autoDrawWinner.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "tsx": "^4.20.3"
   },
   "devDependencies": {
+    "@types/node": "^20.11.30",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "@types/node": "^20.11.30"
+    "typescript": "^5.4.5"
   }
 }
-
-
-
 
