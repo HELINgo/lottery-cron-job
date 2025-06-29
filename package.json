@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "start": "tsx autoDrawWinner.ts",
     "draw": "tsx autoDrawWinner.ts"
   },
   "dependencies": {
@@ -15,6 +16,5 @@
     "typescript": "^5.4.5"
   }
 }
-
 
 
