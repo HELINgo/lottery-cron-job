@@ -2,17 +2,16 @@
   "name": "lottery-cron-job",
   "version": "1.0.0",
   "type": "module",
-  "main": "autoDrawWinner.ts",
   "scripts": {
-    "start": "tsx autoDrawWinner.ts"
+    "draw": "tsx autoDrawWinner.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
-    "dotenv": "^16.3.1",
-    "tsx": "^4.20.3"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
+    "tsx": "^4.20.3",
     "typescript": "^5.4.5"
   }
 }
