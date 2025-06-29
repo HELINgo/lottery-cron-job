@@ -3,17 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "draw": "tsx autoDrawWinner.ts"
+    "build": "tsc",
+    "draw": "node dist/autoDrawWinner.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
-    "dotenv": "^16.3.1",
-    "tsx": "^4.20.3"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
     "typescript": "^5.4.5"
   }
 }
-
 
