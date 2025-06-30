@@ -3,19 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "npx tsc",
+    "build": "node ./node_modules/typescript/bin/tsc",
     "draw": "node -r dotenv/config dist/autoDrawWinner.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
-    "dotenv": "^16.3.1",
-    "typescript": "^5.4.5"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "@types/node": "^20.11.30"
+    "@types/node": "^20.11.30",
+    "typescript": "^5.8.3"
   }
 }
-
-
-
-
