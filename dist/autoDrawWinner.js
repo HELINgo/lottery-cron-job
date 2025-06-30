@@ -1,17 +1,15 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// ✅ 兼容 dist 目录执行环境，明确加载根目录的 .env 文件
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
-// ✅ 初始化 Supabase 客户端
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseKey) {
     console.error('❌ 缺少环境变量 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY');
-    process.exit(1); // 阻止程序继续执行
+    process.exit(1);
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
 const drawWinner = async () => {
@@ -20,7 +18,7 @@ const drawWinner = async () => {
     const { data: expiredRounds, error: roundError } = await supabase
         .from('lottery_rounds')
         .select('*')
-        .lte('end_time', now)
+        .lt('end_time', now)
         .eq('status', 'open');
     if (roundError) {
         console.error('❌ 查询轮次失败:', roundError.message);
@@ -46,6 +44,21 @@ const drawWinner = async () => {
             .from('lottery_rounds')
             .update({ status: 'no_entries' })
             .eq('id', round.id);
+        // ✅ 即使无人参与也开启新一轮（10分钟后开奖）
+        const newStart = new Date();
+        const end = new Date(newStart.getTime() + 10 * 60 * 1000);
+        const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
+                id: randomUUID(),
+                start_time: newStart.toISOString(),
+                end_time: end.toISOString(),
+                status: 'open',
+            }]);
+        if (createNextError) {
+            console.error('❌ 创建下一轮失败:', createNextError.message);
+        }
+        else {
+            console.log(`🚀 无参与者也已开启新一轮，截止时间: ${end.toISOString()}`);
+        }
         return;
     }
     const winnerEntry = entries[Math.floor(Math.random() * entries.length)];
@@ -81,19 +94,19 @@ const drawWinner = async () => {
         return;
     }
     console.log('📦 本轮开奖完成 ✅');
+    // ✅ 开启下一轮，时间为 10 分钟
     const newStart = new Date();
-    const newEnd = new Date(newStart.getTime() + 5 * 60 * 1000);
+    const end = new Date(newStart.getTime() + 10 * 60 * 1000);
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
             id: randomUUID(),
             start_time: newStart.toISOString(),
-            end_time: newEnd.toISOString(),
+            end_time: end.toISOString(),
             status: 'open',
         }]);
     if (createNextError) {
         console.error('❌ 创建下一轮失败:', createNextError.message);
         return;
     }
-    console.log(`🚀 下一轮已开启，截止时间: ${newEnd.toISOString()}`);
+    console.log(`🚀 下一轮已开启，截止时间: ${end.toISOString()}`);
 };
-// ✅ 执行
 drawWinner();

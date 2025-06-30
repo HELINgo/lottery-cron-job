@@ -26,7 +26,7 @@ const drawWinner = async () => {
   const { data: expiredRounds, error: roundError } = await supabase
     .from('lottery_rounds')
     .select('*')
-    .lt('end_time', now) // ✅ 改为严格小于
+    .lt('end_time', now)
     .eq('status', 'open');
 
   if (roundError) {
@@ -59,21 +59,21 @@ const drawWinner = async () => {
       .update({ status: 'no_entries' })
       .eq('id', round.id);
 
-    // ✅ 即使无参与者，也开启下一轮
+    // ✅ 即使无人参与也开启新一轮（10分钟后开奖）
     const newStart = new Date();
-    const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000);
+    const end = new Date(newStart.getTime() + 10 * 60 * 1000);
 
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
       id: randomUUID(),
       start_time: newStart.toISOString(),
-      end_time: newEnd.toISOString(),
+      end_time: end.toISOString(),
       status: 'open',
     }]);
 
     if (createNextError) {
       console.error('❌ 创建下一轮失败:', createNextError.message);
     } else {
-      console.log(`🚀 无参与者也已开启新一轮，截止时间: ${newEnd.toISOString()}`);
+      console.log(`🚀 无参与者也已开启新一轮，截止时间: ${end.toISOString()}`);
     }
 
     return;
@@ -121,14 +121,14 @@ const drawWinner = async () => {
 
   console.log('📦 本轮开奖完成 ✅');
 
-  // ✅ 自动开启下一轮，时长改为 24 小时
+  // ✅ 开启下一轮，时间为 10 分钟
   const newStart = new Date();
-  const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000);
+  const end = new Date(newStart.getTime() + 10 * 60 * 1000);
 
   const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
     id: randomUUID(),
     start_time: newStart.toISOString(),
-    end_time: newEnd.toISOString(),
+    end_time: end.toISOString(),
     status: 'open',
   }]);
 
@@ -137,7 +137,7 @@ const drawWinner = async () => {
     return;
   }
 
-  console.log(`🚀 下一轮已开启，截止时间: ${newEnd.toISOString()}`);
+  console.log(`🚀 下一轮已开启，截止时间: ${end.toISOString()}`);
 };
 
 drawWinner();
