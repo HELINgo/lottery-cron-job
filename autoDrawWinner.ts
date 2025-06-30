@@ -2,20 +2,18 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// ✅ 兼容 dist 目录执行环境，明确加载根目录的 .env 文件
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
-// ✅ 初始化 Supabase 客户端
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ 缺少环境变量 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1); // 阻止程序继续执行
+  process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -105,8 +103,9 @@ const drawWinner = async () => {
 
   console.log('📦 本轮开奖完成 ✅');
 
+  // ✅ 自动开启下一轮，时长改为 24 小时
   const newStart = new Date();
-  const newEnd = new Date(newStart.getTime() + 5 * 60 * 1000);
+  const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
 
   const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
     id: randomUUID(),
@@ -123,7 +122,5 @@ const drawWinner = async () => {
   console.log(`🚀 下一轮已开启，截止时间: ${newEnd.toISOString()}`);
 };
 
-// ✅ 执行
 drawWinner();
-
 

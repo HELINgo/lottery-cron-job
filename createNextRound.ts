@@ -6,13 +6,13 @@ const supabase = createClient(
 );
 
 async function createNextRound() {
- const now = new Date();
-const end = new Date(now.getTime() + 60 * 1000); // 1分钟后开奖
+  const now = new Date();
+  const end = new Date(now.getTime() + 60 * 1000); // 1分钟后开奖
 
   const { error } = await supabase.from('lottery_rounds').insert({
     start_time: now.toISOString(),
     end_time: end.toISOString(),
-    status: 'active',
+    status: 'open', // ✅ 必须统一为 'open'
   });
 
   if (error) {
