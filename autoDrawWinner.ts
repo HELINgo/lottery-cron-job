@@ -26,7 +26,7 @@ const drawWinner = async () => {
   const { data: expiredRounds, error: roundError } = await supabase
     .from('lottery_rounds')
     .select('*')
-    .lte('end_time', now)
+    .lt('end_time', now) // ✅ 改为严格小于
     .eq('status', 'open');
 
   if (roundError) {
@@ -58,6 +58,24 @@ const drawWinner = async () => {
       .from('lottery_rounds')
       .update({ status: 'no_entries' })
       .eq('id', round.id);
+
+    // ✅ 即使无参与者，也开启下一轮
+    const newStart = new Date();
+    const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
+      id: randomUUID(),
+      start_time: newStart.toISOString(),
+      end_time: newEnd.toISOString(),
+      status: 'open',
+    }]);
+
+    if (createNextError) {
+      console.error('❌ 创建下一轮失败:', createNextError.message);
+    } else {
+      console.log(`🚀 无参与者也已开启新一轮，截止时间: ${newEnd.toISOString()}`);
+    }
+
     return;
   }
 
@@ -105,7 +123,7 @@ const drawWinner = async () => {
 
   // ✅ 自动开启下一轮，时长改为 24 小时
   const newStart = new Date();
-  const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
+  const newEnd = new Date(newStart.getTime() + 24 * 60 * 60 * 1000);
 
   const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
     id: randomUUID(),
@@ -123,4 +141,5 @@ const drawWinner = async () => {
 };
 
 drawWinner();
+
 
