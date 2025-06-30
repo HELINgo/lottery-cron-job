@@ -1,13 +1,22 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import * as dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// ✅ 兼容 dist 目录执行环境，明确加载根目录的 .env 文件
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 // ✅ 初始化 Supabase 客户端
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ 缺少环境变量 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY');
+    process.exit(1); // 阻止程序继续执行
+}
+const supabase = createClient(supabaseUrl, supabaseKey);
 const drawWinner = async () => {
     console.log('🎯 正在检查是否有需要开奖的轮次...');
     const now = new Date().toISOString();
-    // ✅ 查询需要开奖的轮次
     const { data: expiredRounds, error: roundError } = await supabase
         .from('lottery_rounds')
         .select('*')
@@ -23,7 +32,6 @@ const drawWinner = async () => {
     }
     const round = expiredRounds[0];
     console.log(`🎲 开始开奖 - 轮次 ID: ${round.id}`);
-    // ✅ 获取参与者
     const { data: entries, error: entryError } = await supabase
         .from('lottery_entries')
         .select('*')
@@ -40,10 +48,8 @@ const drawWinner = async () => {
             .eq('id', round.id);
         return;
     }
-    // ✅ 随机抽取中奖者
     const winnerEntry = entries[Math.floor(Math.random() * entries.length)];
     console.log(`🎉 抽中奖励: ${winnerEntry.wallet}（号码: ${winnerEntry.ticket_number}）`);
-    // ✅ 获取 X（Twitter）账号
     const { data: xHandleData, error: xError } = await supabase
         .from('x_handles')
         .select('x')
@@ -52,7 +58,6 @@ const drawWinner = async () => {
     if (xError) {
         console.warn('⚠️ 获取 X 账号失败:', xError.message);
     }
-    // ✅ 写入中奖历史
     const { error: historyError } = await supabase.from('lottery_history').insert([{
             id: randomUUID(),
             wallet: winnerEntry.wallet,
@@ -67,7 +72,6 @@ const drawWinner = async () => {
         return;
     }
     console.log('✅ 已写入中奖记录');
-    // ✅ 更新轮次状态
     const { error: updateRoundError } = await supabase
         .from('lottery_rounds')
         .update({ status: 'drawn' })
@@ -77,7 +81,6 @@ const drawWinner = async () => {
         return;
     }
     console.log('📦 本轮开奖完成 ✅');
-    // ✅ 开启下一轮
     const newStart = new Date();
     const newEnd = new Date(newStart.getTime() + 5 * 60 * 1000);
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
