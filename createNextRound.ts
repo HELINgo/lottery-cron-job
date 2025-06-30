@@ -7,7 +7,7 @@ const supabase = createClient(
 
 async function createNextRound() {
   const now = new Date();
-  const end = new Date(now.getTime() + 60 * 1000); // 1分钟后开奖
+  const end = new Date(now.getTime() + 10 * 60 * 1000); // ✅ 10分钟后开奖
 
   const { error } = await supabase.from('lottery_rounds').insert({
     start_time: now.toISOString(),
@@ -23,3 +23,4 @@ async function createNextRound() {
 }
 
 createNextRound();
+
