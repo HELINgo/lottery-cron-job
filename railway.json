@@ -1,5 +1,3 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "npm run build"
+  "buildCommand": "echo 'skip build, use precompiled js'"
 }
-
