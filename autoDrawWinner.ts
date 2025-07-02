@@ -1,12 +1,11 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-import { createClient } from '@supabase/supabase-js';
-import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -54,12 +53,18 @@ const drawWinner = async () => {
 
   if (!entries || entries.length === 0) {
     console.warn('⚠️ 本轮没有参与者，标记为作废');
+
     await supabase
       .from('lottery_rounds')
-      .update({ status: 'no_entries' })
+      .update({ status: 'no_entries', is_current: false }) // ✅ 标记为非当前
       .eq('id', round.id);
 
-    // ✅ 即使无人参与也开启新一轮（10分钟后开奖）
+    // ✅ 创建新轮（即使没人参与）
+    await supabase
+      .from('lottery_rounds')
+      .update({ is_current: false })
+      .eq('is_current', true); // 防止之前有多个 current
+
     const newStart = new Date();
     const end = new Date(newStart.getTime() + 10 * 60 * 1000);
 
@@ -68,6 +73,7 @@ const drawWinner = async () => {
       start_time: newStart.toISOString(),
       end_time: end.toISOString(),
       status: 'open',
+      is_current: true // ✅ 设置为当前
     }]);
 
     if (createNextError) {
@@ -111,7 +117,7 @@ const drawWinner = async () => {
 
   const { error: updateRoundError } = await supabase
     .from('lottery_rounds')
-    .update({ status: 'drawn' })
+    .update({ status: 'drawn', is_current: false }) // ✅ 设置为非当前
     .eq('id', round.id);
 
   if (updateRoundError) {
@@ -121,7 +127,12 @@ const drawWinner = async () => {
 
   console.log('📦 本轮开奖完成 ✅');
 
-  // ✅ 开启下一轮，时间为 10 分钟
+  // ✅ 开启新轮前先取消所有当前轮
+  await supabase
+    .from('lottery_rounds')
+    .update({ is_current: false })
+    .eq('is_current', true);
+
   const newStart = new Date();
   const end = new Date(newStart.getTime() + 10 * 60 * 1000);
 
@@ -130,6 +141,7 @@ const drawWinner = async () => {
     start_time: newStart.toISOString(),
     end_time: end.toISOString(),
     status: 'open',
+    is_current: true // ✅ 标记为当前
   }]);
 
   if (createNextError) {
@@ -141,5 +153,4 @@ const drawWinner = async () => {
 };
 
 drawWinner();
-
 
