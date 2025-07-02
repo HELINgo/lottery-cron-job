@@ -7,12 +7,20 @@ const supabase = createClient(
 
 async function createNextRound() {
   const now = new Date();
-  const end = new Date(now.getTime() + 10 * 60 * 1000); // ✅ 10分钟后开奖
+  const end = new Date(now.getTime() + 10 * 60 * 1000); // 10分钟后开奖
 
+  // ✅ 第一步：将当前轮 is_current 设置为 false
+  await supabase
+    .from('lottery_rounds')
+    .update({ is_current: false })
+    .eq('is_current', true);
+
+  // ✅ 第二步：插入新轮，并设置为 is_current: true
   const { error } = await supabase.from('lottery_rounds').insert({
     start_time: now.toISOString(),
     end_time: end.toISOString(),
-    status: 'open', // ✅ 必须统一为 'open'
+    status: 'open',          // 状态设为 open
+    is_current: true,        // ✅ 标记为当前轮
   });
 
   if (error) {
