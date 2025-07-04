@@ -41,6 +41,18 @@ const drawWinner = async () => {
   const round = expiredRounds[0];
   console.log(`🎲 开始开奖 - 轮次 ID: ${round.id}`);
 
+  // ✅ 判断是否已开奖，防止重复处理
+  const { data: existingHistory } = await supabase
+    .from('lottery_history')
+    .select('id')
+    .eq('round_id', round.id)
+    .maybeSingle();
+
+  if (existingHistory) {
+    console.log('⚠️ 该轮已开奖，跳过...');
+    return;
+  }
+
   const { data: entries, error: entryError } = await supabase
     .from('lottery_entries')
     .select('*')
@@ -56,14 +68,25 @@ const drawWinner = async () => {
 
     await supabase
       .from('lottery_rounds')
-      .update({ status: 'no_entries', is_current: false }) // ✅ 标记为非当前
+      .update({ status: 'no_entries', is_current: false })
       .eq('id', round.id);
 
-    // ✅ 创建新轮（即使没人参与）
-    await supabase
-      .from('lottery_rounds')
-      .update({ is_current: false })
-      .eq('is_current', true); // 防止之前有多个 current
+  const { data: currentRounds, error: checkError } = await supabase
+  .from('lottery_rounds')
+  .select('id')
+  .eq('is_current', true)
+  .eq('status', 'open');
+
+if (checkError) {
+  console.error('❌ 检查当前轮失败:', checkError.message);
+  return;
+}
+
+if (currentRounds && currentRounds.length > 0) {
+  console.warn('⚠️ 当前已有进行中的轮次，跳过创建');
+  return;
+}
+
 
     const newStart = new Date();
     const end = new Date(newStart.getTime() + 10 * 60 * 1000);
@@ -73,7 +96,7 @@ const drawWinner = async () => {
       start_time: newStart.toISOString(),
       end_time: end.toISOString(),
       status: 'open',
-      is_current: true // ✅ 设置为当前
+      is_current: true
     }]);
 
     if (createNextError) {
@@ -117,7 +140,7 @@ const drawWinner = async () => {
 
   const { error: updateRoundError } = await supabase
     .from('lottery_rounds')
-    .update({ status: 'drawn', is_current: false }) // ✅ 设置为非当前
+    .update({ status: 'drawn', is_current: false })
     .eq('id', round.id);
 
   if (updateRoundError) {
@@ -127,7 +150,6 @@ const drawWinner = async () => {
 
   console.log('📦 本轮开奖完成 ✅');
 
-  // ✅ 开启新轮前先取消所有当前轮
   await supabase
     .from('lottery_rounds')
     .update({ is_current: false })
@@ -141,7 +163,7 @@ const drawWinner = async () => {
     start_time: newStart.toISOString(),
     end_time: end.toISOString(),
     status: 'open',
-    is_current: true // ✅ 标记为当前
+    is_current: true
   }]);
 
   if (createNextError) {
@@ -153,4 +175,5 @@ const drawWinner = async () => {
 };
 
 drawWinner();
+
 
