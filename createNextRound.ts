@@ -6,29 +6,43 @@ const supabase = createClient(
 );
 
 async function createNextRound() {
-  const now = new Date();
-  const end = new Date(now.getTime() + 10 * 60 * 1000); // 10分钟后开奖
+  const { data: nowResult, error: nowError } = await supabase.rpc('get_now');
 
-  // ✅ 第一步：将当前轮 is_current 设置为 false
-  await supabase
+  if (nowError || !nowResult?.now) {
+    console.error('❌ 获取服务器时间失败:', nowError?.message ?? nowResult);
+    return;
+  }
+
+  const now = new Date(nowResult.now);
+  const end = new Date(now.getTime() + 10 * 60 * 1000);
+
+  console.log('📌 当前时间:', now.toISOString());
+  console.log('📌 结束时间:', end.toISOString());
+
+  const { error: updateError } = await supabase
     .from('lottery_rounds')
     .update({ is_current: false })
     .eq('is_current', true);
 
-  // ✅ 第二步：插入新轮，并设置为 is_current: true
-  const { error } = await supabase.from('lottery_rounds').insert({
+  if (updateError) {
+    console.error('❌ 无法关闭旧轮次:', updateError.message);
+    return;
+  }
+
+  const { error: insertError } = await supabase.from('lottery_rounds').insert({
     start_time: now.toISOString(),
     end_time: end.toISOString(),
-    status: 'open',          // 状态设为 open
-    is_current: true,        // ✅ 标记为当前轮
+    status: 'open',
+    is_current: true,
   });
 
-  if (error) {
-    console.error('❌ 创建新轮次失败:', error.message);
+  if (insertError) {
+    console.error('❌ 新轮次插入失败:', insertError.message);
   } else {
-    console.log('✅ 创建成功：', now.toISOString(), '➔', end.toISOString());
+    console.log('✅ 新轮次创建成功');
   }
 }
 
 createNextRound();
+
 
