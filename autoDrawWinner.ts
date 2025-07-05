@@ -1,12 +1,15 @@
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
+// 解决 __dirname 问题
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+// 手动加载 .env 文件（可选）
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -89,7 +92,7 @@ if (currentRounds && currentRounds.length > 0) {
 
 
     const newStart = new Date();
-    const end = new Date(newStart.getTime() + 10 * 60 * 1000);
+    const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
 
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
       id: randomUUID(),
@@ -137,7 +140,6 @@ if (currentRounds && currentRounds.length > 0) {
   }
 
   console.log('✅ 已写入中奖记录');
-
   const { error: updateRoundError } = await supabase
     .from('lottery_rounds')
     .update({ status: 'drawn', is_current: false })
@@ -150,13 +152,8 @@ if (currentRounds && currentRounds.length > 0) {
 
   console.log('📦 本轮开奖完成 ✅');
 
-  await supabase
-    .from('lottery_rounds')
-    .update({ is_current: false })
-    .eq('is_current', true);
-
   const newStart = new Date();
-  const end = new Date(newStart.getTime() + 10 * 60 * 1000);
+  const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
 
   const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
     id: randomUUID(),
