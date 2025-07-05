@@ -10,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // 手动加载 .env 文件（可选）
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -44,7 +45,6 @@ const drawWinner = async () => {
   const round = expiredRounds[0];
   console.log(`🎲 开始开奖 - 轮次 ID: ${round.id}`);
 
-  // ✅ 判断是否已开奖，防止重复处理
   const { data: existingHistory } = await supabase
     .from('lottery_history')
     .select('id')
@@ -74,30 +74,29 @@ const drawWinner = async () => {
       .update({ status: 'no_entries', is_current: false })
       .eq('id', round.id);
 
-  const { data: currentRounds, error: checkError } = await supabase
-  .from('lottery_rounds')
-  .select('id')
-  .eq('is_current', true)
-  .eq('status', 'open');
+    const { data: currentRounds, error: checkError } = await supabase
+      .from('lottery_rounds')
+      .select('id')
+      .eq('is_current', true)
+      .eq('status', 'open');
 
-if (checkError) {
-  console.error('❌ 检查当前轮失败:', checkError.message);
-  return;
-}
+    if (checkError) {
+      console.error('❌ 检查当前轮失败:', checkError.message);
+      return;
+    }
 
-if (currentRounds && currentRounds.length > 0) {
-  console.warn('⚠️ 当前已有进行中的轮次，跳过创建');
-  return;
-}
-
+    if (currentRounds && currentRounds.length > 0) {
+      console.warn('⚠️ 当前已有进行中的轮次，跳过创建');
+      return;
+    }
 
     const newStart = new Date();
-    const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
+    const end = newStart.getTime() + 24 * 60 * 60 * 1000;
 
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
       id: randomUUID(),
       start_time: newStart.toISOString(),
-      end_time: end.toISOString(),
+      end_time: new Date(end).toISOString(),
       status: 'open',
       is_current: true
     }]);
@@ -105,7 +104,7 @@ if (currentRounds && currentRounds.length > 0) {
     if (createNextError) {
       console.error('❌ 创建下一轮失败:', createNextError.message);
     } else {
-      console.log(`🚀 无参与者也已开启新一轮，截止时间: ${end.toISOString()}`);
+      console.log(`🚀 无参与者也已开启新一轮，截止时间: ${new Date(end).toISOString()}`);
     }
 
     return;
@@ -140,6 +139,7 @@ if (currentRounds && currentRounds.length > 0) {
   }
 
   console.log('✅ 已写入中奖记录');
+
   const { error: updateRoundError } = await supabase
     .from('lottery_rounds')
     .update({ status: 'drawn', is_current: false })
@@ -153,12 +153,12 @@ if (currentRounds && currentRounds.length > 0) {
   console.log('📦 本轮开奖完成 ✅');
 
   const newStart = new Date();
-  const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
+  const end = newStart.getTime() + 24 * 60 * 60 * 1000;
 
   const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
     id: randomUUID(),
     start_time: newStart.toISOString(),
-    end_time: end.toISOString(),
+    end_time: new Date(end).toISOString(),
     status: 'open',
     is_current: true
   }]);
@@ -168,7 +168,7 @@ if (currentRounds && currentRounds.length > 0) {
     return;
   }
 
-  console.log(`🚀 下一轮已开启，截止时间: ${end.toISOString()}`);
+  console.log(`🚀 下一轮已开启，截止时间: ${new Date(end).toISOString()}`);
 };
 
 drawWinner();

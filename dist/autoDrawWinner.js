@@ -33,7 +33,6 @@ const drawWinner = async () => {
     }
     const round = expiredRounds[0];
     console.log(`🎲 开始开奖 - 轮次 ID: ${round.id}`);
-    // ✅ 判断是否已开奖，防止重复处理
     const { data: existingHistory } = await supabase
         .from('lottery_history')
         .select('id')
@@ -71,11 +70,11 @@ const drawWinner = async () => {
             return;
         }
         const newStart = new Date();
-        const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
+        const end = newStart.getTime() + 24 * 60 * 60 * 1000;
         const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
                 id: randomUUID(),
                 start_time: newStart.toISOString(),
-                end_time: end.toISOString(),
+                end_time: new Date(end).toISOString(),
                 status: 'open',
                 is_current: true
             }]);
@@ -83,7 +82,7 @@ const drawWinner = async () => {
             console.error('❌ 创建下一轮失败:', createNextError.message);
         }
         else {
-            console.log(`🚀 无参与者也已开启新一轮，截止时间: ${end.toISOString()}`);
+            console.log(`🚀 无参与者也已开启新一轮，截止时间: ${new Date(end).toISOString()}`);
         }
         return;
     }
@@ -121,11 +120,11 @@ const drawWinner = async () => {
     }
     console.log('📦 本轮开奖完成 ✅');
     const newStart = new Date();
-    const end = new Date(newStart.getTime() + 24 * 60 * 60 * 1000); // 24小时
+    const end = newStart.getTime() + 24 * 60 * 60 * 1000;
     const { error: createNextError } = await supabase.from('lottery_rounds').insert([{
             id: randomUUID(),
             start_time: newStart.toISOString(),
-            end_time: end.toISOString(),
+            end_time: new Date(end).toISOString(),
             status: 'open',
             is_current: true
         }]);
@@ -133,6 +132,6 @@ const drawWinner = async () => {
         console.error('❌ 创建下一轮失败:', createNextError.message);
         return;
     }
-    console.log(`🚀 下一轮已开启，截止时间: ${end.toISOString()}`);
+    console.log(`🚀 下一轮已开启，截止时间: ${new Date(end).toISOString()}`);
 };
 drawWinner();
